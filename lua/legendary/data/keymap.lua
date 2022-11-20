@@ -69,6 +69,7 @@ function Keymap:parse(tbl, builtin) -- luacheck: no unused
   instance.opts = tbl.opts or {}
   instance.builtin = builtin or false
   instance:parse_filters(tbl.filters)
+  instance.kind = tbl.kind
 
   instance.mode_mappings = {}
   if tbl[2] == nil then
