@@ -78,6 +78,7 @@ local function select_inner(opts, context, itemlist)
     format_item = function(item)
       return Format.format_item(item, opts.formatter or Config.default_item_formatter, padding, context.mode)
     end,
+    kind = 'legendary.items'
   }, function(selected)
     if not selected then
       return

@@ -26,12 +26,14 @@ local Log = Lazy.require_on_exported_call('legendary.log')
 local Extensions = Lazy.require_on_exported_call('legendary.extensions')
 
 ---@param parser LegendaryItem
----@return fun(items:table[])
+---@return fun(items:table[], kind: string | nil)
 local function build_parser_func(parser)
   ---@param items table
-  return function(items)
+  return function(items, kind)
     if type(items.itemgroup) == 'string' then
-      State.items:add({ ItemGroup:parse(items):apply() })
+      local parsed = ItemGroup:parse(items):apply()
+      parsed.kind = kind
+      State.items:add({ parsed })
       return
     end
 
@@ -41,10 +43,9 @@ local function build_parser_func(parser)
     end
 
     State.items:add(vim.tbl_map(function(item)
-      if type(item.itemgroup) == 'string' then
-        return ItemGroup:parse(item):apply()
-      end
-      return parser:parse(item):apply()
+      local parsed = type(item.itemgroup) == 'string' and ItemGroup:parse(item):apply() or parser:parse(item):apply()
+      parsed.kind = kind
+      return parsed
     end, items))
   end
 end
@@ -166,7 +167,10 @@ function M.autocmds(aus)
 
   for _, augroup_or_autocmd in ipairs(aus) do
     if type(augroup_or_autocmd.name) == 'string' and #augroup_or_autocmd.name > 0 then
-      local autocmds = Augroup:parse(augroup_or_autocmd --[[@as Augroup]]):apply().autocmds
+      local autocmds = Augroup:parse(
+        augroup_or_autocmd --[[@as Augroup]]
+      )
+        :apply().autocmds
       State.items:add(autocmds)
     else
       -- Only add Autocmds to the list since Augroups can't be executed

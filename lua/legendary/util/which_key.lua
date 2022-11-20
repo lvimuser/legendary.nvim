@@ -18,6 +18,62 @@ local function longest_matching_group(wk, wk_groups)
   return matching_group[2]
 end
 
+local function walk_wk(mapping)
+  local WKConfig = require('which-key.config')
+  local Keys = require('which-key.keys')
+
+  local mode = vim.api.nvim_get_mode()['mode']
+  local buf = vim.api.nvim_get_current_buf()
+
+  local prefix_i = mapping.keys.keys
+  local path = Keys.get_tree(mode).tree:path(prefix_i)
+  local buf_path = Keys.get_tree(mode, buf).tree:path(prefix_i)
+
+  -- vim.pretty_print({ m = mapping, prefix_i = prefix_i, bufpath = buf_path, path = path })
+
+  local seen = {}
+  for i = 2, #mapping.keys.notation - 1 do
+    local node = buf_path[i]
+    if not (node and node.mapping and node.mapping.label) then
+      node = path[i]
+    end
+
+    local step = mapping.keys.notation[i]
+    if node and node.mapping and node.mapping.label then
+      -- step = node.mapping.group and (WKConfig.options.icons.group .. label) or label
+      local label = node.mapping.label
+      step = label
+    end
+
+    if WKConfig.options.key_labels[step] then
+      -- step = WKConfig.options.key_labels[step]
+      break
+    end
+
+    table.insert(seen, step)
+    -- vim.pretty_print({
+    --   i = i,
+    --   step = step,
+    --   -- m = node and node.mapping,
+    --   g = node and node.mapping and node.mapping.group,
+    --   label = node and node.mapping and node.mapping.label,
+    -- })
+
+    -- if WKConfig.options.key_labels[step] then
+    --   step = WKConfig.options.key_labels[step]
+    -- end
+  end
+
+  -- if #seen > 0 and seen[1] == 'l' then
+  --   vim.pretty_print(mapping)
+  -- end
+  -- if #seen > 0 then
+  --   vim.pretty_print(seen)
+  -- end
+  -- return table.concat(seen, WKConfig.options.icons.separator)
+  return table.concat(seen, ' > ')
+end
+
 ---@param wk table
 ---@param wk_opts table
 ---@param use_groups boolean
@@ -44,6 +100,7 @@ local function wk_to_legendary(wk, wk_opts, wk_groups, use_groups)
   end
   legendary.description = wk.label or vim.tbl_get(wk, 'opts', 'desc')
   legendary.opts = wk.opts or {}
+  legendary.kind = walk_wk(wk)
   return legendary
 end
 
