@@ -18,12 +18,23 @@ local function longest_matching_group(wk, wk_groups)
   return matching_group[2]
 end
 
+local did_load_wk
 local function walk_wk(mapping)
+  local Util = require('which-key.util')
   local WKConfig = require('which-key.config')
   local Keys = require('which-key.keys')
 
-  local mode = vim.api.nvim_get_mode()['mode']
+  local mode = Util.get_mode()
   local buf = vim.api.nvim_get_current_buf()
+
+  if not did_load_wk then
+    -- make sure the trees exist for update
+    Keys.get_tree(mode)
+    Keys.get_tree(mode, buf)
+    -- update only trees related to buf
+    Keys.update(buf)
+  end
+  did_load_wk = true
 
   local prefix_i = mapping.keys.keys
   local path = Keys.get_tree(mode).tree:path(prefix_i)
