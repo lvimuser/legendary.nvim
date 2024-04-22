@@ -111,6 +111,27 @@ end
 ---@class ItemListSortInplaceOpts
 ---@field itemgroup string
 
+-- Return the first index with the given value (or nil if not found).
+function indexOf(array, value)
+  for i, v in ipairs(array) do
+    if v == value then
+      return i
+    end
+  end
+  return nil
+end
+
+-- Return a key with the given value (or nil if not found).  If there are
+-- multiple keys with that value, the particular key returned is arbitrary.
+function keyOf(tbl, value)
+  for k, v in pairs(tbl) do
+    if v == value then
+      return k
+    end
+  end
+  return nil
+end
+
 ---Sort the list *IN PLACE* according to config.
 ---THIS MODIFIES THE LIST IN PLACE.
 --- @param opts ItemListSortInplaceOpts
@@ -176,6 +197,14 @@ function ItemList:sort_inplace(opts)
         Log.error('Failed to sort items: %s', vim.inspect(sorted))
       else
         items = sorted
+      end
+
+      local last_executed_item = require('legendary.data.state').last_executed_item
+      if opts.most_recent_first and last_executed_item then
+        local i = indexOf(items, last_executed_item)
+        if i then
+          items[i], items[1] = items[1], items[i]
+        end
       end
 
       self.items = items
