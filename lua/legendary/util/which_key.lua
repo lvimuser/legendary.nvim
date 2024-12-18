@@ -18,7 +18,7 @@ local function longest_matching_group(wk, wk_groups)
   return matching_group[2]
 end
 
-local did_load_wk
+local did_load_wk = {}
 local function walk_wk(mapping)
   local Util = require('which-key.util')
   local WKConfig = require('which-key.config')
@@ -27,27 +27,26 @@ local function walk_wk(mapping)
   local mode = Util.get_mode()
   local buf = vim.api.nvim_get_current_buf()
 
-  if not did_load_wk then
-    -- make sure the trees exist for update
+  -- make sure the trees exist for update
+  if vim.tbl_isempty(did_load_wk) then
     Keys.get_tree(mode)
     Keys.get_tree(mode, buf)
     -- update only trees related to buf
     Keys.update(buf)
+  elseif not did_load_wk[buf] then
+    -- update only trees related to buf
+    Keys.update(buf)
   end
-  did_load_wk = true
+  did_load_wk[buf] = true
 
   local prefix_i = mapping.keys.keys
-  local path = Keys.get_tree(mode).tree:path(prefix_i)
-  local buf_path = Keys.get_tree(mode, buf).tree:path(prefix_i)
 
-  -- vim.pretty_print({ m = mapping, prefix_i = prefix_i, bufpath = buf_path, path = path })
+  local bufpath = Keys.get_tree(mode, buf).tree:path(prefix_i)
+  local path = vim.tbl_isempty(bufpath) and Keys.get_tree(mode).tree:path(prefix_i) or bufpath
 
   local seen = {}
   for i = 2, #mapping.keys.notation - 1 do
-    local node = buf_path[i]
-    if not (node and node.mapping and node.mapping.label) then
-      node = path[i]
-    end
+    local node = path[i]
 
     local step = mapping.keys.notation[i]
     if node and node.mapping and node.mapping.label then
@@ -55,6 +54,15 @@ local function walk_wk(mapping)
       local label = node.mapping.label
       step = label
     end
+
+    -- if vim.startswith(prefix_i, ' e') then
+    --   vim.print({ i = i, prefix_i = prefix_i })
+    --   vim.print({ notation_i = mapping.keys.notation[i], label = node and node.mapping.label, step = step })
+    --   vim.print({ node = node })
+    --   vim.print({ key_label = WKConfig.options.key_labels[step] })
+    --
+    --   vim.print('...')
+    -- end
 
     if WKConfig.options.key_labels[step] then
       -- step = WKConfig.options.key_labels[step]
