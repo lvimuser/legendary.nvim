@@ -161,7 +161,7 @@ end
 ---Bind a *list of* autocmds and/or augroups
 ---@param aus table
 function M.autocmds(aus)
-  local islist = vim.islist or vim.tbl_islist
+  local islist = vim.islist
   if not islist(aus) then
     Log.error('Expected list, got %s.\n    %s', type(aus), vim.inspect(aus))
     return
