@@ -34,6 +34,7 @@ local function walk_wk(mapping)
     -- update only trees related to buf
     Keys.update(buf)
   elseif not did_load_wk[buf] then
+    Keys.get_tree(mode, buf)
     -- update only trees related to buf
     Keys.update(buf)
   end
